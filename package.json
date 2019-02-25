@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
+    "release": "cd android && ./gradlew assembleRelease",
+    "update-android": "code-push release-react HYD-android android --dev false --d Production --t 1.0.0 --m true",
+    "update-ios": "code-push release-react HYD-ios ios --dev false --d Production --t 1.0.0 --m true",
     "test": "jest"
   },
   "dependencies": {
@@ -15,10 +18,12 @@
     "react": "16.6.3",
     "react-native": "0.57.8",
     "react-native-barcode-builder": "^1.0.5",
+    "react-native-code-push": "^5.5.2",
     "react-native-gesture-handler": "^1.0.15",
     "react-native-image-picker": "^0.28.0",
     "react-native-image-zoom-viewer": "^2.2.25",
     "react-native-is-iphonex": "^1.0.1",
+    "react-native-splash-screen": "^3.2.0",
     "react-native-svg": "^9.2.4",
     "react-native-svg-uri": "^1.2.3",
     "react-native-vector-icons": "^6.3.0",

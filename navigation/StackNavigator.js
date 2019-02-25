@@ -39,7 +39,7 @@ const NotesStack = createStackNavigator({
 });
 
 NotesStack.navigationOptions = {
-  tabBarLabel: '记录',
+  tabBarLabel: '历史',
   tabBarIcon: ({ focused }) => (
     <TabBarIcon
       focused={focused}

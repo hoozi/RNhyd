@@ -2,7 +2,7 @@ import request from '../utils/request';
 import { stringify } from 'qs';
 
 export async function updateUserInfo(params) {
-  return request('/admin/user/edit', {
+  return request('/app/user/edit', {
     method: 'PUT',
     body: params
   });

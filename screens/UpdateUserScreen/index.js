@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   desText: {
     textAlign: 'center',
     fontSize: 16,
-    color: 'rgba(0,0,0,0.55)'
+    color: '#888888'
   },  
   titleText: {
     marginTop: 5,

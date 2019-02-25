@@ -77,6 +77,7 @@ project.ext.react = [
 ]
 
 apply from: "../../node_modules/react-native/react.gradle"
+apply from: "../../node_modules/react-native-code-push/android/codepush.gradle"
 
 /**
  * Set this to true to create two separate APKs instead of one:
@@ -93,6 +94,10 @@ def enableSeparateBuildPerCPUArchitecture = false
  */
 def enableProguardInReleaseBuilds = false
 
+def releaseTime() {
+    return new Date().format("yyyyMMddHHmmss", TimeZone.getTimeZone("UTC"))
+}
+
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -102,9 +107,17 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
         ndk {
             abiFilters "armeabi-v7a", "x86"
+        }
+    }
+    signingConfigs {
+        release {
+            storeFile file(MYAPP_RELEASE_STORE_FILE)
+            storePassword MYAPP_RELEASE_STORE_PASSWORD
+            keyAlias MYAPP_RELEASE_KEY_ALIAS
+            keyPassword MYAPP_RELEASE_KEY_PASSWORD
         }
     }
     splits {
@@ -116,9 +129,18 @@ android {
         }
     }
     buildTypes {
+        debug  {
+            buildConfigField "String", "CODEPUSH_KEY", '"TNhb6u80B0TSDOOQRI9ZtsKMinDJ990ef006-6b3b-4f67-92cc-f9bb05c6b39d"'
+        }
+
+        releaseStaging {
+            buildConfigField "String", "CODEPUSH_KEY", '"TNhb6u80B0TSDOOQRI9ZtsKMinDJ990ef006-6b3b-4f67-92cc-f9bb05c6b39d"'
+        }
         release {
             minifyEnabled enableProguardInReleaseBuilds
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            buildConfigField "String", "CODEPUSH_KEY", '"d-Em4g73x9op30lcH6RCuVRZ8ppu990ef006-6b3b-4f67-92cc-f9bb05c6b39d"'
         }
     }
     // applicationVariants are e.g. debug, release
@@ -134,9 +156,23 @@ android {
             }
         }
     }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+    android.applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            outputFileName = new File('../../../release/', "hyd-" + buildType.name + "-v" +
+                    defaultConfig.versionName + "-" + defaultConfig.versionCode + "${releaseTime()}.apk" );
+        }
+    }
+
 }
 
 dependencies {
+    compile project(':react-native-splash-screen')
+    compile project(':react-native-code-push')
     compile project(':react-native-gesture-handler')
     compile project(':react-native-image-picker')
     compile project(':react-native-svg')

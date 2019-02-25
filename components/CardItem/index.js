@@ -16,7 +16,7 @@ export default class CardItem extends PureComponent {
     <View key={item.index}>{item.render(data)}</View>:
     <View style={styles.secondary} key={item.index}>
       <Text style={{...styles.secondaryText, color: 'rgba(0,0,0,0.45)'}}>{item.title}</Text> 
-      <View>{item.render&&item.title ? item.render(data) : <Text style={styles.secondaryText}>{data[item.index]}</Text>}</View>
+      <View style={{flex: 1,flexDirection: 'column'}}>{item.render&&item.title ? item.render(data) : <Text style={styles.secondaryText}>{data[item.index]}</Text>}</View>
     </View>
   ));
   render() {
@@ -70,8 +70,7 @@ const styles = StyleSheet.create({
     borderWidth:0,
     borderRadius: 3, 
     marginBottom: 10, 
-    paddingBottom: 0,
-    height: 208
+    paddingBottom: 0
   },
   cardBody: {
     borderTopWidth: 0, 
@@ -93,6 +92,7 @@ const styles = StyleSheet.create({
   },
   secondaryText: {
     color: 'rgba(0,0,0,0.55)',
-    fontSize: 12
+    fontSize: 12,
+    textAlign: 'right'
   }
 })

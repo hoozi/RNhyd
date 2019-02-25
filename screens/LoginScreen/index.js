@@ -13,7 +13,7 @@ const loginInputMap = [
   {
     name: 'username',
     props: {
-      placeholder: '用户名'
+      placeholder: '用户名21333'
     },
     options: {
       rules: [
@@ -21,7 +21,8 @@ const loginInputMap = [
           required: true,
           message: '请输入用户名'
         }
-      ]
+      ],
+      initialValue: '浙B12345'
     }
   },
   {
@@ -35,7 +36,8 @@ const loginInputMap = [
           required: true,
           message: '请输入密码'
         }
-      ]
+      ],
+      initialValue: '123456'
     }
   }
 ]

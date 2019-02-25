@@ -23,3 +23,26 @@ export function updateContainerTaskStatus(name) {
     body: params
   });
 }
+
+export function updateCargoTaskStatus(name) {
+  return async params => request(`/app/cargo/operate/${name}`, {
+    method: 'POST',
+    body: params
+  });
+}
+
+export async function queryContainerHistory(params) {
+  return request(`/app/container/operate/history-task-list?${stringify(params)}`);
+}
+
+export async function queryCargoHistory(params) {
+  return request(`/app/cargo/operate/history-task-list?${stringify(params)}`);
+}
+
+export async function queryContainerHistoryDetailById(id) {
+  return request(`/app/container/operate/history-task/${id}`);
+}
+
+export async function queryCargoHistoryDetailById(id) {
+  return request(`/app/cargo/operate/history-task/${id}`);
+}

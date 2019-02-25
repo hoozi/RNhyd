@@ -1,7 +1,8 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component, Fragment, PureComponent } from 'react';
 import { View, Text, StatusBar, ScrollView, StyleSheet, Image } from 'react-native';
 import { Button, List, ActivityIndicator, Toast, Portal} from '@ant-design/react-native';
 import Barcode from 'react-native-barcode-builder';
+import isEmpty from 'lodash/isEmpty';
 import ImagePicker from 'react-native-image-picker';
 import map from 'lodash/map';
 import { childDefaultNavigationOptions, childScreenNavigationOptions } from '../../constants/navigationOptions';
@@ -10,8 +11,9 @@ import FooterToolBar from '../../components/FooterToolbar';
 import { connect } from 'react-redux';
 import { mapEffects, mapLoading } from '../../utils/reduxHelpers';
 
-const mapStateToProps = ({task}) => ({
+const mapStateToProps = ({task, upload}) => ({
   ...task,
+  ...upload,
   ...mapLoading('task', {
     fetchTaskDetailing: 'fetchTaskDetailById',
     updateStatusing: 'updateTaskStatus'
@@ -27,7 +29,7 @@ const mapDispatchToProps = ({task, upload}) => ({
 })
 
 @connect(mapStateToProps, mapDispatchToProps)
-class DetailScreen extends Component {
+class DetailScreen extends PureComponent {
   static navigationOptions = {
     ...childScreenNavigationOptions,
     ...childDefaultNavigationOptions,
@@ -37,8 +39,8 @@ class DetailScreen extends Component {
     title: '选择签收照片',
     cancelButtonTitle: '取消',
     takePhotoButtonTitle: '拍照', 
-    maxWidth: 300,
-    maxHeight: 300,
+    maxWidth: 500,
+    maxHeight: 500,
     chooseFromLibraryButtonTitle: '选择照片',
     noData: false,
     storageOptions: {
@@ -50,11 +52,30 @@ class DetailScreen extends Component {
   }
   getButtons(detail) {
     const { status, operateType='', id } = detail;
+    const { navigation: {navigate} } = this.props
     const containerStatus = {
       ZX: {
-        8: { text: '提空', props: { disabled: !!status === 7} },
-        9: { text: '装箱', props: { disabled: true } },
-        10: { text: '进港', props: { disabled: true } }
+        8: { text: '提空', props: { 
+            disabled: !!!(status==7 && status!=8 && status!=9),
+            onPress: () => {
+              this.handleUpdateStatus('suitcase-empty-container', {id});
+            }
+          } 
+        },
+        9: { text: '装箱', props: { 
+            disabled: !!!(status==8 && status!=7),
+            onPress: () => {
+              navigate('Enter', {id})
+            }
+          } 
+        },
+        10: { text: '进港', props: { 
+            disabled: !!!(status==9 && status!=7),
+            onPress: () => {
+              this.handleUpdateStatus('enter-port', {id})
+            }
+          } 
+        }
       },
       CX: {
         11: { text: '提重', props: { 
@@ -78,41 +99,85 @@ class DetailScreen extends Component {
             }
           } 
         },
-        14: { text: '还空', props: { disabled: !!!(status == 13 && status!=7)} }
+        14: { text: '还空', props: { 
+            disabled: !!!(status == 13 && status!=7),
+            onPress: () => { 
+              this.handleUpdateStatus('return-empty-container', {id}) 
+            }
+          } 
+        }
       }
     }
     const cargoStatus = {
-      8: { text: '装货', props: { disabled: !!status === 7  } },
-      9: { text: '卸货', props: { disabled: true } },
-      10: { text: '完成', props: { disabled: true } }
+      8: { text: '装货', props: { 
+          disabled: !!!(status==7 && status!=8 && status!=9),
+          onPress: () => {
+            navigate('Enter', {id})
+          }
+        } 
+      },
+      9: { text: '卸货', props: { 
+          disabled: !!!(status==8 && status!=7),
+          onPress: () => {
+            this.handleUpdateStatus('unload-cargo', {id})
+          }
+        } 
+      },
+      10: { text: '签收', props: { 
+          disabled:!!!(status==9 && status!=7),
+          onPress: () => {
+            this.handleOpenImagePicker();
+          }
+        } 
+      }
     }
     
     return operateType ? 
     map(containerStatus[operateType], (item, key) => <Button type='primary' key={key} style={styles.bottomButton} {...item.props}>{item.text}</Button>) :
-    map(cargoStatus, (item, key) => <Button type='primary' key={key} style={styles.bottomButton}>{item.text}</Button>)
+    map(cargoStatus, (item, key) => <Button type='primary' key={key} style={styles.bottomButton} {...item.props}>{item.text}</Button>)
+  }
+  uploadPickure(response) {
+    const { detail: {id} } = this.props
+    const formData = new FormData();
+    const {uri, type, fileName: name} = response;
+    this.setState({
+      uri
+    });
+    formData.append('file', {uri, type, name: uri});
+    this.props.upload(formData, data => {
+      const { bucketName, fileName } = data;
+      this.handleUpdateStatus('sign', {
+        id,
+        signPictureUrl: `${bucketName}-${fileName}`
+      })
+    });
   }
   componentDidMount() {
     const { navigation } = this.props;
     const id = navigation.getParam('id');
-    this.props.fetchTaskDetailById(id);
+    const taskType = navigation.getParam('taskType');
+    this.props.fetchTaskDetailById({
+      taskType,
+      params: id
+    });
   }
   handleOpenImagePicker() {
     ImagePicker.showImagePicker(this.imagePickerOptions, response => {
-      this.setState({
-        uri: response.uri
-      })
+      if(!response.didCancel) {
+        this.uploadPickure(response);
+      }
     })
   }
   handleUpdateStatus(operateName, params) {
     const key = Toast.loading('操作中...');
-    const { id } = params;
     this.props.updateTaskStatus({
       operateName:operateName,
       params
     }, () => {
       Portal.remove(key);
-      Toast.success('操作成功');
-      this.props.fetchTaskDetailById(id);
+      Toast.success('操作成功', 1, () => {
+        this.props.navigation.navigate('Task', {refresh: true});
+      });
     })
   }
   renderButtons(detail) {
@@ -124,7 +189,7 @@ class DetailScreen extends Component {
     )
     const cargoButtons = () => (
       <Fragment>
-
+        {this.getButtons(detail)}
       </Fragment>
     )
 
@@ -135,26 +200,75 @@ class DetailScreen extends Component {
     return props[truckType];
   }
   renderListItem(data) {
+    if(isEmpty(data)) return [];
+    const { truckType, navigation } = this.props;
+    const taskType = navigation.getParam('taskType');
+    //const operateType = data.operateType;
     const fieldMap = {
-      'operateNo': '作业单号',
-      'ctnNo': '箱号',
-      'ctnSizeType': '箱型尺寸',
-      'suitcaseAddress': '提箱点',
-      'returnAddress': '还箱点',
-      'consigneeAddress': '收货地址',
-      'consigneeName': '收货人',
-      'consigneeMobile': '联系方式',
-      'planStuffingTime': '预计到厂时间',
-      'remark': '备注'
+      1: {
+        'operateNo': '作业单号',
+        'finishTime': '完成时间',
+        'ctnNo': '箱号',
+        'ctnSizeType': '箱型尺寸',
+        'suitcaseAddress': '提箱点',
+        'returnAddress': '还箱点',
+        'consigneeAddress': '收货地址',
+        'consigneeName': '收货人',
+        'consigneeMobile': '联系方式',
+        'planStuffingTime': '预计到厂时间',
+        'remark': '备注',
+        'evaluationContent': '客户评价'
+      },
+      2: {
+        'operateNo': '作业单号',
+        'finishTime': '完成时间',
+        'sourceAddress': '提货地',
+        'targetAddress': '送货地',
+        'cargoName': '货物名称',
+        'roughWeight': '单件重量',
+        'totalWeight': '总重量',
+        'volume': '体积',
+        'consigneeAddress': '收货地址',
+        'consigneeName': '收货人',
+        'consigneeMobile': '联系方式',
+        'remark': '备注',
+        'evaluationContent': '客户评价'
+      }
     }
-    return map(fieldMap, (value, key) => (
-      <List.Item key={key} extra={<Text style={styles.fieldValue}>{data[key]}</Text>}>
-        <Text style={styles.fieldName}>{value}</Text>
-      </List.Item>
-    ))
+    const unit = {
+      'roughWeight': 'kg',
+      'totalWeight': 'kg',
+      'volume': 'm³',
+    }
+    const itemData = fieldMap[truckType];
+    
+    return map(itemData, (value, key) => {
+      let listItemProps = {}
+      if(key === 'evaluationContent' || key === 'remark' || key === 'consigneeAddress') {
+        listItemProps = {
+          multipleLine: true
+        }
+      }
+      if(taskType === 'new') {
+        if(key === 'finishTime' || key === 'evaluationContent') {
+          return null;
+        }
+      }
+      return (
+        <List.Item key={key} {...listItemProps} extra={
+            <View style={{flex: 1,flexDirection: 'column'}}>
+              <Text style={styles.fieldValue}>{data[key]+(unit[key] ? unit[key] : '')}</Text>
+            </View>
+          }
+        >
+          <Text style={styles.fieldName}>{value}</Text>
+        </List.Item>
+      )
+    })
   }
   render() {
-    const { navigation, fetchTaskDetailing, detail } = this.props;
+    const { navigation, fetchTaskDetailing, detail, uploading, truckType } = this.props;
+    const { uri } = this.state;
     return (
       <Layout>
         <StatusBar barStyle='dark-content'/>
@@ -166,16 +280,29 @@ class DetailScreen extends Component {
               <View style={{paddingBottom: 72}}>
                 <List>
                   {this.renderListItem(detail)}
+                  {
+                    (detail.operateType === 'CX' && detail.status === '12') || 
+                    (truckType == 2 && detail.status === '10') ?
+                    <List.Item extra={
+                        uploading ? 
+                        <ActivityIndicator text='上传中...'/> : 
+                        uri ? 
+                        <Image source={{uri}} roundAsCircle={true} style={{width: 64, height: 64, borderRadius: 4}}/> :
+                        <Text style={styles.fieldValue}>暂无照片</Text>
+                      }
+                    >
+                      <Text style={styles.fieldName}>签收照片</Text>
+                    </List.Item> : null
+                  }
                 </List>
               </View>
             </ScrollView>
             {
-              navigation.getParam('hasOperate') &&
+              navigation.getParam('taskType') === 'new' &&
               <FooterToolBar>
                 {this.renderButtons(detail)}
               </FooterToolBar>
             }
-            
           </Fragment>
         }
       </Layout>
@@ -195,7 +322,9 @@ const styles = StyleSheet.create({
     color: 'rgba(0,0,0,.65)'
   },
   fieldValue: {
+    textAlignVertical: 'center',
     fontSize: 14,
+    textAlign: 'right',
     color: 'rgba(0,0,0,.85)'
   }
 })

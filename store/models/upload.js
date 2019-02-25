@@ -14,10 +14,11 @@ const reducers = {
   }
 };
 const effects = dispatch => ({
-  async upload(payload) {
+  async upload(payload, stata, callback) {
     const response = await upload(payload);
     if(isNil(response) || response.code !== 0) return;
     this.save(response.data);
+    callback && callback(response.data);
   }
 });
 

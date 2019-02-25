@@ -5,7 +5,6 @@ export function mapEffects(namespace, names) {
   names.forEach(item => {
     effects[item] = namespace[item];
   });
-  //console.log(effects)
   return effects;
 }
 

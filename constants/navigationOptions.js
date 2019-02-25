@@ -13,7 +13,8 @@ const screenDefaultNavigationOptions = {
   },
   headerTintColor: '#fff',
   headerTitleStyle: {
-    fontSize: 18
+    fontSize: 18,
+    lineHeight: 45
   },
   headerPressColorAndroid: 'transparent'
 }

@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
-import { View, StatusBar, ScrollView, StyleSheet, Text, TouchableHighlight, Image, Modal } from 'react-native';
-import { Button, List, InputItem, ActivityIndicator } from '@ant-design/react-native';
+import { View, StatusBar, ScrollView, StyleSheet, Text, TouchableHighlight, Image, Modal, KeyboardAvoidingView } from 'react-native';
+import { Button, List, InputItem, ActivityIndicator, Toast, Picker } from '@ant-design/react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import ImagePicker from 'react-native-image-picker';
 import { createForm } from 'rc-form';
 import isIPhoneX from 'react-native-is-iphonex';
 import ImageViewer from 'react-native-image-zoom-viewer';
@@ -25,7 +26,17 @@ const inputItemMap = [
     }
   },
   {
-    name: 'fno',
+    name: 'cst',
+    label: '箱型尺寸',
+    props: {
+
+    },
+    options: {
+
+    }
+  },
+  {
+    name: 'sealNo',
     label: '封号',
     props: {
 
@@ -35,18 +46,18 @@ const inputItemMap = [
     }
   },
   {
-    name: 'weight',
+    name: 'roughWeight',
     label: '重量',
     props: {
       type: 'number',
-      extra: 'KG'
+      extra: 'kg'
     },
     options: {
 
     }
   },
   {
-    name: 'v',
+    name: 'volume',
     label: '体积',
     props: {
       type: 'number',
@@ -57,7 +68,7 @@ const inputItemMap = [
     }
   },
   {
-    name: 'count',
+    name: 'number',
     label: '件数',
     props: {
       type: 'number'
@@ -77,7 +88,7 @@ const inputItemMap = [
     }
   },
   {
-    name: 'mark',
+    name: 'remark',
     label: '备注',
     props: {
 
@@ -88,70 +99,209 @@ const inputItemMap = [
   }
 ]
 
-const mapDispatchToProps = (({upload}) => ({
-  ...mapEffects(upload, ['upload'])
-}));
+const cst = [
+  [
+    {
+      label: '25',
+      value: '25'
+    },
+    {
+      label: '22',
+      value: '22'
+    },
+    {
+      label: '42',
+      value: '42'
+    },
+    {
+      label: '45',
+      value: '45'
+    },
+    {
+      label: 'L5',
+      value: 'L5'
+    }
+  ],
+  [
+    {
+      label: 'G1',
+      value: 'G1'
+    },
+    {
+      label: 'T1',
+      value: 'T1'
+    },
+    {
+      label: 'R1',
+      value: 'R1'
+    },
+    {
+      label: 'OT',
+      value: 'OT'
+    },
+  ]
+]
 
-@connect(({upload}) => ({
+const mapStateToProps = ({upload, task}) => ({
+  ...task,
   ...upload,
   ...mapLoading('upload', {
     uploading: 'upload'
+  }),
+  ...mapLoading('task', {
+    updateStatusing: 'updateTaskStatus'
   })
-}), mapDispatchToProps)
+})
+
+const mapDispatchToProps = (({upload, task}) => ({
+  ...mapEffects(upload, ['upload']),
+  ...mapEffects(task, ['updateTaskStatus'])
+}));
+
+@connect(mapStateToProps, mapDispatchToProps)
 @createForm()
 class EnterScreen extends Component {
   static navigationOptions = {
     ...childScreenNavigationOptions,
     ...childDefaultNavigationOptions,
-    title: '装箱'
+    title: '数据录入'
   }
   state = {
-    
+    uri: null
+  }
+  signPictureUrl = ''
+  imagePickerOptions = {
+    title: '选择签收照片',
+    cancelButtonTitle: '取消',
+    takePhotoButtonTitle: '拍照', 
+    maxWidth: 500,
+    maxHeight: 500,
+    chooseFromLibraryButtonTitle: '选择照片',
+    noData: false,
+    storageOptions: {
+      skipBackup: true  
+    }
+  }
+  uploadPickure(response) {
+    const { detail: {id} } = this.props
+    const formData = new FormData();
+    const {uri, type, fileName: name} = response;
+    this.setState({
+      uri
+    });
+    formData.append('file', {uri, type, name: uri});
+    this.props.upload(formData, data => {
+      const { bucketName, fileName } = data;
+      this.signPictureUrl = `${bucketName}-${fileName}`
+    });
   }
   componentDidMount() {
     
   }
-  handleShowCameraVisible = flag => {
-    this.setState({
-      cameraVisible: !!flag
+  handleOpenImagePicker = () => {
+    ImagePicker.showImagePicker(this.imagePickerOptions, response => {
+      if(!response.didCancel) {
+        this.uploadPickure(response);
+      }
     })
   }
+  handleUpdateStatus(operateName) {
+    const { form, navigation } = this.props;
+    const id = navigation.getParam('id');
+    form.validateFields((error, values) => {
+      if(error) return;
+      const ctnSize =  values['cst'][0];
+      const ctnType =  values['cst'][1];
+      delete values['cst'];
+      this.props.updateTaskStatus({
+        operateName:operateName,
+        params: {
+          id,
+          ...values,
+          signPictureUrl: this.signPictureUrl,
+          ctnSize,
+          ctnType
+        }
+      }, () => {
+        Toast.success('操作成功', 2, () => {
+          navigation.goBack();
+        });
+      })
+    });
+  }
   renderOpenCameraListItem = () => (
-    <List.Item
-      thumb={<AntDesign name='camera' color='#f15a4a' size={22} style={{marginRight: 12}}/>}
-      extra={<CaiNiao name='xiayiyeqianjinchakangengduo' color='#c7c7cc' size={20}/>}
-    >
-      <Text style={{fontSize: 16}}>拍摄单据照片</Text>
-    </List.Item>
+    [
+      <List.Item
+        extra={<CaiNiao name='xiayiyeqianjinchakangengduo' color='#c7c7cc' size={20}/>}
+        onPress={this.handleOpenImagePicker}
+        key='1'
+      >
+        <Text style={{fontSize: 17,color: '#000000'}}>照片</Text>
+      </List.Item>,
+      <List.Item key='2'>
+        <View>
+          {
+            this.props.uploading ? 
+            <ActivityIndicator text='上传中...'/> : 
+            this.state.uri ? 
+            <Image source={{uri: this.state.uri}} roundAsCircle={true} style={{width: 64, height: 64, borderRadius: 4}}/> :
+            <Text style={{color: 'rgba(0,0,0,0.45)'}}>暂无照片</Text>
+          }
+        </View>
+      </List.Item>
+    ]
   )
   render() {
-    const { form: {getFieldDecorator, getFieldError, getFieldValue} } = this.props
+    const { form: {getFieldDecorator, getFieldError, getFieldValue}, updateStatusing } = this.props
     return (
       <Layout>
         <StatusBar barStyle='dark-content'/>
         <ScrollView style={{flex: 1}}>
-          <View style={{paddingBottom: 72}}>
-            <List renderHeader='基本信息'>
-              {
-                inputItemMap.map(item => (
-                  getFieldDecorator(item.name, item.options)(
-                    <InputItem 
-                      key={item.name}
-                      error={getFieldError(item.name)}
-                      placeholder='请输入'
-                      labelNumber={4}
-                      {...item.props}
-                    >
-                      {item.label}
-                    </InputItem>
-                  )
-                ))
-              }
-            </List>
-          </View>
+          <KeyboardAvoidingView behavior='padding' enabled style={{flex: 1}}>
+            <View style={{paddingBottom: 72}}>
+              <List>
+                {
+                  inputItemMap.map(item => {
+                    const ctnSizeType = getFieldDecorator(item.name, item.options)(
+                      <Picker
+                        data={cst}
+                        cascade={false}
+                        key={item.name}
+                        extra={<CaiNiao name='xiayiyeqianjinchakangengduo' color='#c7c7cc' size={20}/>}
+                      >
+                        <List.Item>
+                          <Text style={{fontSize: 16, color:'#000000'}}>箱型尺寸</Text>
+                        </List.Item>
+                      </Picker>
+                    )
+                    return item.name === 'cst' ? ctnSizeType : getFieldDecorator(item.name, item.options)(
+                        <InputItem 
+                          key={item.name}
+                          error={getFieldError(item.name)}
+                          placeholder='请输入'
+                          labelNumber={4}
+                          {...item.props}
+                        >
+                          {item.label}
+                        </InputItem>
+                      )
+                  })
+                }
+                {this.renderOpenCameraListItem()}
+              </List>
+            </View>
+          </KeyboardAvoidingView>
         </ScrollView>
         <FooterToolbar>
-          <Button type='primary' style={styles.bottomButton}>提交</Button>
+          <Button 
+            disabled={updateStatusing} 
+            loading={updateStatusing} 
+            type='primary' 
+            style={styles.bottomButton} 
+            onPress={() => {
+              this.handleUpdateStatus('stuffing-container')
+            }}
+          >提交</Button>
         </FooterToolbar>
       </Layout>
     );
