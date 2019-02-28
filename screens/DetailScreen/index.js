@@ -65,7 +65,7 @@ class DetailScreen extends PureComponent {
         9: { text: '装箱', props: { 
             disabled: !!!(status==8 && status!=7),
             onPress: () => {
-              navigate('Enter', {id})
+              navigate('Enter', {id, type: 'container'})
             }
           } 
         },
@@ -112,7 +112,7 @@ class DetailScreen extends PureComponent {
       8: { text: '装货', props: { 
           disabled: !!!(status==7 && status!=8 && status!=9),
           onPress: () => {
-            navigate('Enter', {id})
+            navigate('Enter', {id, type: 'cargo'})
           }
         } 
       },
@@ -282,7 +282,7 @@ class DetailScreen extends PureComponent {
                   {this.renderListItem(detail)}
                   {
                     (detail.operateType === 'CX' && detail.status === '12') || 
-                    (truckType == 2 && detail.status === '10') ?
+                    (truckType == 2 && detail.status === '9') ?
                     <List.Item extra={
                         uploading ? 
                         <ActivityIndicator text='上传中...'/> : 

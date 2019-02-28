@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import isIPhoneX from 'react-native-is-iphonex';
 
 const { hairlineWidth } = StyleSheet;
 
@@ -13,7 +14,7 @@ export default props => (
       left: 0,
       zIndex: 10,
       paddingTop: 8,
-      paddingBottom: 8,
+      paddingBottom: isIPhoneX ? 25 : 8,
       paddingLeft: 4,
       paddingRight: 4,
       backgroundColor: '#fff',

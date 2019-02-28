@@ -1,16 +1,18 @@
 import React, { Component } from 'react';
-import { View, Image, StatusBar, StyleSheet, TextInput, Platform, KeyboardAvoidingView, ScrollView } from 'react-native';
+import { View, Image, StatusBar, StyleSheet, TextInput, TouchableHighlight, Text, KeyboardAvoidingView, ScrollView, Alert } from 'react-native';
 import { Button } from '@ant-design/react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import { createForm } from 'rc-form';
 import CopyRight from '../../components/CopyRight';
+import VehicleKeybord from '../../components/VehicleKeybord';
 import Layout from '../../layouts/Layout';
 import layout from '../../constants/Layout';
 import { connect } from 'react-redux';
 import { mapEffects } from '../../utils/reduxHelpers';
 
+
 const loginInputMap = [
-  {
+  /* {
     name: 'username',
     props: {
       placeholder: '用户名21333'
@@ -24,7 +26,7 @@ const loginInputMap = [
       ],
       initialValue: '浙B12345'
     }
-  },
+  }, */
   {
     name: 'password',
     props: {
@@ -36,13 +38,11 @@ const loginInputMap = [
           required: true,
           message: '请输入密码'
         }
-      ],
-      initialValue: '123456'
+      ]
     }
   }
 ]
 const iconNameMap = {
-  'username': 'user',
   'password': 'lock1'
 }
 
@@ -76,11 +76,17 @@ class LoginItem extends Component {
   }
 }
 
+
+
 @connect(mapStateToProps, mapDispacthToProps)
 @createForm()
 export default class LoginScreen extends Component {
   static navigationOptions = {
     header: null
+  }
+  state = {
+    keybordVisible: false,
+    username: ''
   }
   handleLoginSubmit = () => {
     const { form, fetchToken } = this.props;
@@ -88,13 +94,26 @@ export default class LoginScreen extends Component {
       if(error) return;
       fetchToken({
         ...values,
+        username: this.state.username,
         scope: 'server',
         grant_type: 'password'
       });
     });
   }
+  handleShowKeybord = flag => {
+    this.setState({keybordVisible:!!flag})
+  }
+  handleVehicleChange = username => {
+    this.setState({username});
+    username.length === 7 && this.handleShowKeybord(false);
+  }
   render() {
     const { form: {getFieldDecorator, getFieldError, getFieldValue} } = this.props;
+    const { keybordVisible,username } = this.state;
+    const modalProps = {
+      maskClosable: true,
+      onClose: () => this.handleShowKeybord(false)
+    }
     return (
       <Layout>
         <ScrollView contentContainerStyle={{flex: 1}} bounces={false}>
@@ -106,6 +125,14 @@ export default class LoginScreen extends Component {
               } style={styles.avatar}/>
             </View>
             <View style={styles.loginContainer}>
+              <TouchableHighlight underlayColor='transparent' onPress={this.handleShowKeybord}>
+                <View style={styles.textInputContainer}>
+                  <View style={styles.inputItem}>
+                    <AntDesign name='user' size={16} color='#e8e8e8' style={styles.textInputPrefix}/>
+                    <Text style={{...styles.textInput, lineHeight: 40, color:username ? '#000' : '#e8e8e8'}}>{username?username:'车牌号'}</Text> 
+                  </View>
+                </View>
+              </TouchableHighlight>
               {
                 loginInputMap.map(item => 
                   <View style={styles.textInputContainer} key={item.name}>
@@ -120,10 +147,32 @@ export default class LoginScreen extends Component {
                   </View>
                 )
               }
-              <Button type='primary' disabled={!getFieldValue('username') || !getFieldValue('password')} onPress={this.handleLoginSubmit} style={styles.loginButton}>登录</Button>
+              <Button type='primary' disabled={!username || !getFieldValue('password')} onPress={this.handleLoginSubmit} style={styles.loginButton}>登录</Button>
             </View>
           </KeyboardAvoidingView>
         </ScrollView>
+        <VehicleKeybord 
+          keybordVisible={keybordVisible} 
+          onChange={this.handleVehicleChange}
+          modalProps={modalProps}
+          renderHeader={value => {
+            return (
+              <View style={{
+                flex:1,
+                paddingLeft:8,
+                paddingRight:8,
+                paddingTop: 4,
+                paddingBottom: 4,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <Text>{value}</Text>
+                <Button type='ghost' size='small' onPress={() => this.handleShowKeybord(false)}>完成</Button>
+              </View>
+            )
+          }}
+        />
       </Layout>
     );
   }
@@ -148,9 +197,6 @@ const styles = StyleSheet.create({
     left:12,
     top: 12,
     zIndex: 1
-  },
-  inputItem: {
-    
   },
   textInput: {
     borderColor: '#e8e8e8',

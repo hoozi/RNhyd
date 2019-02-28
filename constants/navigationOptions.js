@@ -1,10 +1,12 @@
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, StatusBar } from 'react-native';
 import StackViewStyleInterpolator from 'react-navigation-stack/src/views/StackView/StackViewStyleInterpolator';
 import CaiNiao from '../components/Icon';
 
 const screenDefaultNavigationOptions = {
   headerStyle: {
+    paddingTop: Platform.OS === 'ios' ? 0 : StatusBar.currentHeight,
+    height:  Platform.OS === 'ios' ? 45 : 72,
     backgroundColor: '#108ee9',
     elevation: 0,
     borderBottomColor: 'transparent',

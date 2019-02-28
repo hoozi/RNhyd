@@ -5,8 +5,8 @@
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
     "release": "cd android && ./gradlew assembleRelease",
-    "update-android": "code-push release-react HYD-android android --dev false --d Production --t 1.0.0 --m true",
-    "update-ios": "code-push release-react HYD-ios ios --dev false --d Production --t 1.0.0 --m true",
+    "update-android": "code-push release-react HYD-android android --dev false --d Production --t 1.0.0",
+    "update-ios": "code-push release-react HYD-ios ios --dev false --d Production --t 1.0.0",
     "test": "jest"
   },
   "dependencies": {

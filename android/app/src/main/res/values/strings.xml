@@ -1,4 +1,5 @@
 <resources>
     <string moduleConfig="true" name="reactNativeCodePush_androidDeploymentKey"></string>
     <string name="app_name">货易达</string>
+    <string name="android_auto_update_download_progress">正在下载:%1$d%%</string>
 </resources>

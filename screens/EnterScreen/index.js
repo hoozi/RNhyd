@@ -1,50 +1,17 @@
 import React, { Component } from 'react';
-import { View, StatusBar, ScrollView, StyleSheet, Text, TouchableHighlight, Image, Modal, KeyboardAvoidingView } from 'react-native';
+import { View, StatusBar, ScrollView, StyleSheet, Text, KeyboardAvoidingView } from 'react-native';
 import { Button, List, InputItem, ActivityIndicator, Toast, Picker } from '@ant-design/react-native';
-import AntDesign from 'react-native-vector-icons/AntDesign';
 import ImagePicker from 'react-native-image-picker';
 import { createForm } from 'rc-form';
-import isIPhoneX from 'react-native-is-iphonex';
-import ImageViewer from 'react-native-image-zoom-viewer';
 import { connect } from 'react-redux';
 import { childDefaultNavigationOptions, childScreenNavigationOptions } from '../../constants/navigationOptions';
 import Layout from '../../layouts/Layout';
 import CaiNiao from '../../components/Icon';
 import FooterToolbar from '../../components/FooterToolbar';
+import ImagePreview from '../../components/ImagePreview';
 import { mapEffects, mapLoading } from '../../utils/reduxHelpers';
 
-
-const inputItemMap = [
-  {
-    name: 'ctnNo',
-    label: '箱号',
-    props: {
-
-    },
-    options: {
-
-    }
-  },
-  {
-    name: 'cst',
-    label: '箱型尺寸',
-    props: {
-
-    },
-    options: {
-
-    }
-  },
-  {
-    name: 'sealNo',
-    label: '封号',
-    props: {
-
-    },
-    options: {
-
-    }
-  },
+const baseInputMap = [
   {
     name: 'roughWeight',
     label: '重量',
@@ -98,6 +65,53 @@ const inputItemMap = [
     }
   }
 ]
+
+const containerInputMap = [
+  {
+    name: 'ctnNo',
+    label: '箱号',
+    props: {
+
+    },
+    options: {
+
+    }
+  },
+  {
+    name: 'cst',
+    label: '箱型尺寸',
+    props: {
+
+    },
+    options: {
+
+    }
+  },
+  {
+    name: 'sealNo',
+    label: '封号',
+    props: {
+
+    },
+    options: {
+
+    }
+  },
+  ...baseInputMap
+]
+
+const cargoInputMap = [...baseInputMap, 
+  {
+    name: 'totalWeight',
+    label: '重量',
+    props: {
+      type: 'number',
+      extra: 'kg'
+    },
+    options: {
+
+    }
+  }];
 
 const cst = [
   [
@@ -208,13 +222,22 @@ class EnterScreen extends Component {
   handleUpdateStatus(operateName) {
     const { form, navigation } = this.props;
     const id = navigation.getParam('id');
+    const type = navigation.getParam('type');
+    const nameMap = {
+      'container': 'stuffing-container',
+      'cargo': 'load-cargo'
+    }
+    let ctnSize='';
+    let ctnType='';
     form.validateFields((error, values) => {
       if(error) return;
-      const ctnSize =  values['cst'][0];
-      const ctnType =  values['cst'][1];
-      delete values['cst'];
+      if(type === 'container') {
+        ctnSize =  values['cst'][0];
+        ctnType =  values['cst'][1];
+        delete values['cst'];
+      }
       this.props.updateTaskStatus({
-        operateName:operateName,
+        operateName:nameMap[type],
         params: {
           id,
           ...values,
@@ -223,8 +246,8 @@ class EnterScreen extends Component {
           ctnType
         }
       }, () => {
-        Toast.success('操作成功', 2, () => {
-          navigation.goBack();
+        Toast.success('操作成功', 1, () => {
+          navigation.navigate('Task');
         });
       })
     });
@@ -244,7 +267,7 @@ class EnterScreen extends Component {
             this.props.uploading ? 
             <ActivityIndicator text='上传中...'/> : 
             this.state.uri ? 
-            <Image source={{uri: this.state.uri}} roundAsCircle={true} style={{width: 64, height: 64, borderRadius: 4}}/> :
+            <ImagePreview uri={this.state.uri}/> :
             <Text style={{color: 'rgba(0,0,0,0.45)'}}>暂无照片</Text>
           }
         </View>
@@ -252,46 +275,51 @@ class EnterScreen extends Component {
     ]
   )
   render() {
-    const { form: {getFieldDecorator, getFieldError, getFieldValue}, updateStatusing } = this.props
+    const { form: {getFieldDecorator, getFieldError, getFieldValue}, updateStatusing, navigation } = this.props;
+    const type = navigation.getParam('type');
+    const inputMap = {
+      'container': containerInputMap,
+      'cargo': cargoInputMap
+    }
     return (
       <Layout>
         <StatusBar barStyle='dark-content'/>
-        <ScrollView style={{flex: 1}}>
-          <KeyboardAvoidingView behavior='padding' enabled style={{flex: 1}}>
-            <View style={{paddingBottom: 72}}>
-              <List>
-                {
-                  inputItemMap.map(item => {
-                    const ctnSizeType = getFieldDecorator(item.name, item.options)(
-                      <Picker
-                        data={cst}
-                        cascade={false}
-                        key={item.name}
-                        extra={<CaiNiao name='xiayiyeqianjinchakangengduo' color='#c7c7cc' size={20}/>}
-                      >
-                        <List.Item>
-                          <Text style={{fontSize: 16, color:'#000000'}}>箱型尺寸</Text>
-                        </List.Item>
-                      </Picker>
-                    )
-                    return item.name === 'cst' ? ctnSizeType : getFieldDecorator(item.name, item.options)(
-                        <InputItem 
+        <KeyboardAvoidingView behavior='padding' enabled style={{flex: 1}}>
+          <ScrollView style={{flex: 1}}>
+              <View style={{paddingBottom: 72}}>
+                <List>
+                  {
+                    inputMap[type].map(item => {
+                      const ctnSizeType = getFieldDecorator(item.name, item.options)(
+                        <Picker
+                          data={cst}
+                          cascade={false}
                           key={item.name}
-                          error={getFieldError(item.name)}
-                          placeholder='请输入'
-                          labelNumber={4}
-                          {...item.props}
+                          extra={<CaiNiao name='xiayiyeqianjinchakangengduo' color='#c7c7cc' size={20}/>}
                         >
-                          {item.label}
-                        </InputItem>
+                          <List.Item>
+                            <Text style={{fontSize: 16, color:'#000000'}}>箱型尺寸</Text>
+                          </List.Item>
+                        </Picker>
                       )
-                  })
-                }
-                {this.renderOpenCameraListItem()}
-              </List>
-            </View>
-          </KeyboardAvoidingView>
-        </ScrollView>
+                      return item.name === 'cst' ? ctnSizeType : getFieldDecorator(item.name, item.options)(
+                          <InputItem 
+                            key={item.name}
+                            error={getFieldError(item.name)}
+                            placeholder='请输入'
+                            labelNumber={4}
+                            {...item.props}
+                          >
+                            {item.label}
+                          </InputItem>
+                        )
+                    })
+                  }
+                  {this.renderOpenCameraListItem()}
+                </List>
+              </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
         <FooterToolbar>
           <Button 
             disabled={updateStatusing} 
@@ -299,7 +327,7 @@ class EnterScreen extends Component {
             type='primary' 
             style={styles.bottomButton} 
             onPress={() => {
-              this.handleUpdateStatus('stuffing-container')
+              this.handleUpdateStatus()
             }}
           >提交</Button>
         </FooterToolbar>
@@ -314,11 +342,6 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
     justifyContent: 'flex-end'
-  },
-  bottomBar: {
-    paddingBottom: isIPhoneX ? 25 : 5,
-    backgroundColor: 'transparent',
-    alignItems: 'center'
   },
   bottomButton: {
     flex: 1,

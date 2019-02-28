@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   accountCard: {
     borderWidth: 0,
     backgroundColor: '#108ee9',
-    height: 120,
+    height: 90,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 12

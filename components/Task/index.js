@@ -6,7 +6,7 @@ import {
   StyleSheet, 
   StatusBar, 
   FlatList,
-  Platform,
+  TouchableHighlight,
   RefreshControl
 } from 'react-native';
 import {
@@ -135,7 +135,7 @@ class Task extends Component {
             index: 'cargoName'
           },
           {
-            title: '收货人',
+            title: '收货人',
             index: 'consigneeName'
           },
           {
@@ -217,6 +217,10 @@ class Task extends Component {
     this.page = 1;
     this.getTaskPager({fetching: false, refreshList: true})
   }
+  handleRetry = () => {
+    this.page = 1;
+    this.getTaskPager({refreshList: true});
+  }
   handleListLoadMore = () => {
     const { pages } = this.props;
     if(this.page >= pages || this.onEndReachedCalledDuringMomentum) return;
@@ -260,10 +264,12 @@ class Task extends Component {
     )
   }
   renderListEmpty = () => (
-    <View style={{flex: 1,alignItems: 'center', justifyContent: 'center'}}>
-      <SvgUri svgXmlData={svg} />
-      <Text style={{fontSize:14, marginTop: 8, color: '#ccc'}}>暂无数据</Text>
-    </View>
+    <TouchableHighlight style={{flex:1}} underlayColor='transparent' onPress={this.handleRetry}>
+      <View style={{flex: 1,alignItems: 'center', justifyContent: 'center'}}>
+        <SvgUri svgXmlData={svg} />
+        <Text style={{fontSize:14, marginTop: 8, color: '#ccc'}}>暂无数据,请点击重试</Text>
+      </View>
+    </TouchableHighlight>
   )
   render() {
     const { fetching, data, footerType } = this.state;
@@ -272,11 +278,13 @@ class Task extends Component {
       <Layout>
         <StatusBar
           barStyle='light-content'
+          translucent={false}
+          backgroundColor='#108ee9'
         />
         {
           fetchTasking && footerType!==1 && !fetching ? 
           <View style={{flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center'}}><ActivityIndicator text='加载中...'/></View> :
-          !isNil(data) && data.length > 1 ? 
+          !isNil(data) && data.length > 0 ? 
           <FlatList 
             style={styles.container} 
             contentContainerStyle={{paddingTop: 10}}
