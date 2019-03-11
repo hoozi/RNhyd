@@ -76,7 +76,6 @@ const effects = {
       callback && callback();
       return;
     };
-    console.log(response.data)
     this.save({...response.data, truckType});
     callback && callback(response.data);
   },

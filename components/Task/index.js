@@ -52,14 +52,12 @@ class Task extends Component {
     fetching: false,
     footerType: 0
   }
-  page = 1
   onEndReachedCalledDuringMomentum = true
   constructor(props) {
     super(props);
-    /* this.taskDidFocus = props.navigation.addListener('didFocus', () => {
-      this.page = 1;
-      
-    }) */
+    this.taskType = props.taskType || 'new';
+    this.page = 1;  
+    this.pages = 0
   }
   getCardProps = item => {
     const { truckType } = this.props;
@@ -172,13 +170,13 @@ class Task extends Component {
     return props[truckType];
   }
   getItemLayout = (data, index) => ({
-    length: CARD_HEIGHT, offset: 208*index+10, index
+    length: CARD_HEIGHT, offset: CARD_HEIGHT*index+10, index
   })
   getTaskPager(state, cb) {
     const {refreshList = false, ...restState} = state;
-    const { taskType = 'new', navigation } = this.props
+    const { navigation } = this.props;
     this.props.fetchTask({
-      taskType: taskType, 
+      taskType: this.taskType, 
       params: {
         current: this.page
       }
@@ -189,6 +187,7 @@ class Task extends Component {
         data: !refreshList ? [...this.state.data, ...data.records] : data.records,
         ...restState
       });
+      this.pages = data.pages;
       if(data.pages === this.page) {
         this.setState({
           footerType: 2
@@ -222,8 +221,7 @@ class Task extends Component {
     this.getTaskPager({refreshList: true});
   }
   handleListLoadMore = () => {
-    const { pages } = this.props;
-    if(this.page >= pages || this.onEndReachedCalledDuringMomentum) return;
+    if(this.page >= this.pages || this.onEndReachedCalledDuringMomentum) return;
     this.setState({
       footerType: 1
     });
@@ -235,7 +233,7 @@ class Task extends Component {
     <WingBlank size='md' key={item.id}>
       <CardItem
         onCardPress={() => {
-          this.props.navigation.navigate('Detail', {id: item.id, taskType: this.props.taskType})
+          this.props.navigation.navigate('Detail', {id: item.id, taskType: this.taskType})
         }}
         renderTitle='operateNo'
         renderExtra='confirmOrderTime'

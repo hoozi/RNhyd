@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator, createBottomTabNavigator } from 'react-navigation';
-import { screenNavigationOptions, screenDefaultNavigationOptions, modalScreenNavigationOptions } from '../constants/navigationOptions';
+import { screenNavigationOptions, screenDefaultNavigationOptions } from '../constants/navigationOptions';
 
 import TabBarIcon from '../components/TabBarIcon';
 import DetailScreen from '../screens/DetailScreen';

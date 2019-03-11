@@ -12,19 +12,29 @@ export default class KeyBordView extends Component {
   renderKey(index) {
     const { keys } = this.props
     let key = null;
+    let width;
+    let height;
+    if(keys.length>=37) {
+      width = 30;
+      height = 30;
+    } else {
+      width = 32;
+      height = 32;
+    }
     if(index+1 === keys.length) {
       key = (
-        <View style={{...styles.key, width:69,backgroundColor:'#108ee9'}}>
+        <View style={{...styles.key, width:width*2+5,backgroundColor:'#108ee9'}}>
           <Text style={{color: '#fff'}}>清除</Text>
         </View>
       )
     } else if(keys[index] === '') {
       key = (
-        <View style={{width: 32, height: 32, marginLeft:5}}/>
+        <View style={{width, height, marginLeft:5}}/>
       )
     } else {
+      
       key = (
-        <View style={styles.key}>
+        <View style={{...styles.key, width, height}}>
           <Text>{keys[index]}</Text>
         </View>
       )
