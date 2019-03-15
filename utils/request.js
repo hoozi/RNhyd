@@ -20,6 +20,7 @@ function checkStatus(response) {
   if (response.status >= 200 && response.status < 300) {
     return response;
   }
+  
   const errortext = codeMessage[response.status] || response.statusText;
   response.status != 401 && Toast.fail(errortext);
   const error = new Error(errortext);

@@ -32,8 +32,8 @@ const effects = dispatch => ({
   },
   async updateUserInfo(payload) {
     const response = await updateUserInfo(payload);
-    if(isNil(response) || response.code != 0) return;
-    if(!response.data) {
+    if(isNil(response)) return ;
+    if(response.code === 1) {
       return Toast.fail(response.msg);
     }
     dispatch.user.logout();
